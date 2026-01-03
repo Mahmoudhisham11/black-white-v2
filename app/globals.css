@@ -1,0 +1,604 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  font-family: "Tajawal", sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* ==================== LIGHT MODE TEMPLATE ==================== */
+:root,
+:root html {
+  color-scheme: light;
+}
+
+:root {
+  /* Primary Colors */
+  --main-color: #1976d2;
+  --main-color-hover: #1565c0;
+  --main-color-light: #e3f2fd;
+  --secondary-color: #42a5f5;
+  --accent-color: #0d47a1;
+  
+  /* Background Colors */
+  --background: #f5f7fa;
+  --surface: #ffffff;
+  --surface-hover: #f8f9fa;
+  --surface-elevated: #ffffff;
+  
+  /* Text Colors - Enhanced for readability */
+  --text-primary: #0d1117;
+  --text-secondary: #4a5568;
+  --text-tertiary: #718096;
+  --text-heading: #1a202c;
+  --text-label: #2d3748;
+  --text-muted: #a0aec0;
+  --text-on-primary: #ffffff;
+  
+  /* Border Colors */
+  --border-color: #e2e8f0;
+  --border-hover: #cbd5e0;
+  --border-focus: #1976d2;
+  
+  /* Shadow System */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.15);
+  --shadow-focus: 0 0 0 3px rgba(25, 118, 210, 0.15);
+  
+  /* Status Colors */
+  --success: #4caf50;
+  --success-light: #e8f5e9;
+  --error: #f44336;
+  --error-light: #ffebee;
+  --warning: #ff9800;
+  --warning-light: #fff3e0;
+  --info: #2196f3;
+  --info-light: #e3f2fd;
+  
+  /* Component Variables */
+  --text-color: var(--text-primary);
+  --input-bg: var(--surface);
+  --input-border: var(--border-color);
+  --input-focus-border: var(--border-focus);
+  --card-bg: var(--surface);
+  --button-primary-bg: var(--main-color);
+  --button-primary-text: var(--text-on-primary);
+  --button-primary-hover: var(--main-color-hover);
+  --button-secondary-bg: var(--surface-hover);
+  --button-secondary-text: var(--text-primary);
+  --button-secondary-hover: var(--border-hover);
+  --button-danger-bg: var(--error);
+  --button-danger-text: var(--text-on-primary);
+  --button-danger-hover: #d32f2f;
+  --button-bg-red: var(--error);
+  --button-text-red: var(--error);
+  --button-bg-red-hover: #d32f2f;
+  --button-text-red-hover: var(--text-on-primary);
+  --hover-color: var(--main-color-hover);
+  --modal-button-secondary-bg: #e0e0e0;
+  --modal-button-text-secondary: var(--text-primary);
+  --modal-button-secondary-hover-bg: #d0d0d0;
+  --modal-button-primary-bg: var(--main-color);
+  --modal-button-text: var(--text-on-primary);
+  --modal-button-primary-hover-bg: var(--main-color-hover);
+  --modal-button-border-input: 1px solid var(--border-color);
+  --modal-button-shadow-input-focus: var(--shadow-focus);
+  --modal-button-border-select: 1px solid var(--border-color);
+  --modal-button-shadow-select-hover: var(--shadow-focus);
+}
+
+/* ==================== DARK MODE TEMPLATE ==================== */
+[data-theme="dark"],
+[data-theme="dark"] html {
+  color-scheme: dark;
+}
+
+[data-theme="dark"] {
+  /* Primary Colors */
+  --main-color: #64b5f6;
+  --main-color-hover: #90caf9;
+  --main-color-light: #1e3a5f;
+  --secondary-color: #42a5f5;
+  --accent-color: #bbdefb;
+  
+  /* Background Colors */
+  --background: #0d1117;
+  --surface: #161b22;
+  --surface-hover: #1f2428;
+  --surface-elevated: #21262d;
+  
+  /* Text Colors - Enhanced for contrast */
+  --text-primary: #f0f6fc;
+  --text-secondary: #c9d1d9;
+  --text-tertiary: #8b949e;
+  --text-heading: #ffffff;
+  --text-label: #e6edf3;
+  --text-muted: #6e7681;
+  --text-on-primary: #0d1117;
+  
+  /* Border Colors */
+  --border-color: #30363d;
+  --border-hover: #484f58;
+  --border-focus: #64b5f6;
+  
+  /* Shadow System */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.7);
+  --shadow-focus: 0 0 0 3px rgba(100, 181, 246, 0.25);
+  
+  /* Status Colors */
+  --success: #56d364;
+  --success-light: #1a472a;
+  --error: #f85149;
+  --error-light: #3d1f1f;
+  --warning: #d29922;
+  --warning-light: #3d2f1f;
+  --info: #58a6ff;
+  --info-light: #1e3a5f;
+  
+  /* Component Variables */
+  --text-color: var(--text-primary);
+  --input-bg: var(--surface);
+  --input-border: var(--border-color);
+  --input-focus-border: var(--border-focus);
+  --card-bg: var(--surface);
+  --button-primary-bg: var(--main-color);
+  --button-primary-text: var(--text-on-primary);
+  --button-primary-hover: var(--main-color-hover);
+  --button-secondary-bg: var(--surface-hover);
+  --button-secondary-text: var(--text-primary);
+  --button-secondary-hover: var(--border-hover);
+  --button-danger-bg: var(--error);
+  --button-danger-text: var(--text-on-primary);
+  --button-danger-hover: #da3633;
+  --button-bg-red: var(--error);
+  --button-text-red: var(--error);
+  --button-bg-red-hover: #da3633;
+  --button-text-red-hover: var(--text-on-primary);
+  --hover-color: var(--main-color-hover);
+  --modal-button-secondary-bg: #30363d;
+  --modal-button-text-secondary: var(--text-primary);
+  --modal-button-secondary-hover-bg: #484f58;
+  --modal-button-primary-bg: var(--main-color);
+  --modal-button-text: var(--text-on-primary);
+  --modal-button-primary-hover-bg: var(--main-color-hover);
+  --modal-button-border-input: 1px solid var(--border-color);
+  --modal-button-shadow-input-focus: var(--shadow-focus);
+  --modal-button-border-select: 1px solid var(--border-color);
+  --modal-button-shadow-select-hover: var(--shadow-focus);
+}
+
+/* ==================== BASE STYLES ==================== */
+body {
+  direction: rtl;
+  background-color: var(--background);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+.main {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--background);
+}
+
+/* ==================== UNIFIED BUTTON SYSTEM ==================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+  font-family: "Tajawal", sans-serif;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Primary Button */
+.btn-primary {
+  background: linear-gradient(135deg, var(--main-color), var(--main-color-hover));
+  color: var(--text-on-primary);
+  border: 1px solid transparent;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  background: linear-gradient(135deg, var(--main-color-hover), var(--main-color));
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Secondary Button */
+.btn-secondary {
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--button-secondary-hover);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Danger Button */
+.btn-danger {
+  background: var(--button-danger-bg);
+  color: var(--button-danger-text);
+  border: 1px solid transparent;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--button-danger-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Outline Button */
+.btn-outline {
+  background: transparent;
+  color: var(--main-color);
+  border: 2px solid var(--main-color);
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: var(--main-color);
+  color: var(--text-on-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Ghost Button */
+.btn-ghost {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid transparent;
+  box-shadow: none;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--surface-hover);
+  border-color: var(--border-color);
+}
+
+/* Button Sizes */
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+.btn-lg {
+  padding: 14px 28px;
+  font-size: 17px;
+  border-radius: 12px;
+}
+
+/* ==================== UNIFIED INPUT SYSTEM ==================== */
+.input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 15px;
+  font-family: "Tajawal", sans-serif;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  border: 1.5px solid var(--input-border);
+  border-radius: 10px;
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
+}
+
+.input::placeholder {
+  color: var(--text-tertiary);
+  opacity: 0.7;
+}
+
+.input:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.input:focus {
+  border-color: var(--input-focus-border);
+  box-shadow: var(--shadow-focus);
+  background: var(--surface);
+}
+
+.input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--surface-hover);
+}
+
+/* Input Container with Icon */
+.inputContainer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1.5px solid var(--input-border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.inputContainer:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.inputContainer:focus-within {
+  border-color: var(--input-focus-border);
+  box-shadow: var(--shadow-focus);
+  background: var(--surface);
+}
+
+.inputContainer label,
+.inputContainer svg {
+    font-size: 20px;
+    color: var(--main-color);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.inputContainer input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 15px;
+  color: var(--text-primary);
+  background: transparent;
+  font-family: "Tajawal", sans-serif;
+}
+
+/* Select inside inputContainer is styled separately in products/styles.module.css */
+.inputContainer select {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 15px;
+  color: var(--text-primary);
+  background: var(--surface);
+  font-family: "Tajawal", sans-serif;
+  /* Override will be handled in products/styles.module.css */
+}
+
+.inputContainer input::placeholder {
+  color: var(--text-tertiary);
+  opacity: 0.7;
+}
+
+/* ==================== UNIFIED CARD SYSTEM ==================== */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--border-hover);
+}
+
+.card-header {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.card-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin: 0;
+}
+
+.card-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.card-body {
+  color: var(--text-primary);
+}
+
+.card-footer {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* ==================== UNIFIED SEARCH BOX ==================== */
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1.5px solid var(--input-border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: var(--shadow-sm);
+  width: 100%;
+  max-width: 400px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.searchBox:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.searchBox:focus-within {
+  border-color: var(--input-focus-border);
+  box-shadow: var(--shadow-focus);
+  background: var(--surface);
+}
+
+.searchBox svg {
+  font-size: 20px;
+  color: var(--main-color);
+  flex-shrink: 0;
+}
+
+.searchBox input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 15px;
+  color: var(--text-primary);
+  background: transparent;
+  font-family: "Tajawal", sans-serif;
+}
+
+.searchBox input::placeholder {
+  color: var(--text-tertiary);
+  opacity: 0.7;
+}
+
+/* ==================== TABLES ==================== */
+table {
+  width: 100%;
+  text-align: center;
+  border-collapse: collapse;
+  background: var(--surface);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+table, th, td {
+  padding: 16px 20px;
+  border-collapse: collapse;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  background: linear-gradient(135deg, var(--main-color), var(--main-color-hover));
+  color: var(--text-on-primary);
+  font-weight: 600;
+  z-index: 10;
+  box-shadow: var(--shadow-sm);
+}
+
+tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+  background-color: var(--surface-hover);
+  transform: scale(1.01);
+}
+
+tbody tr:nth-child(even) {
+  background-color: var(--surface-hover);
+}
+
+tbody td {
+  color: var(--text-primary);
+}
+
+tfoot {
+  background: linear-gradient(135deg, var(--main-color), var(--main-color-hover));
+  color: var(--text-on-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* ==================== SCROLLBAR ==================== */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--main-color);
+  border-radius: 10px;
+  border: 2px solid var(--surface);
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--main-color-hover);
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media(max-width: 767px) {
+  .btn {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+  
+  .input,
+  .inputContainer {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+  
+  .card {
+    padding: 16px;
+  }
+  
+  table, th, td {
+    padding: 12px 8px;
+    font-size: 14px;
+  }
+}
+
+/* ==================== PRINT STYLES ==================== */
+@media print {
+  @page {
+    size: auto;
+    margin: 0;
+  }
+  body {
+    padding: 0;
+    margin: 0;
+    background: white;
+  }
+  table, th, td {
+    padding: 8px;
+    border: 1px solid #ddd;
+  }
+  thead th {
+    background: #2c2c2c !important;
+    color: white !important;
+}
+}

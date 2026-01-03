@@ -1,0 +1,164 @@
+.resete {
+    width: 100%;
+    min-height: 100vh;
+    height: auto;
+    display: flex;
+    justify-content: flex-start;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    box-sizing: border-box;
+    background-color: #f5f5f5;
+    font-family: Arial, sans-serif;
+}
+
+.title {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.btnBack {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 5px 10px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.title h2 {
+    font-size: 28px;
+}
+
+.imageContainer {
+    position: relative;
+    width: 200px;
+    height: 120px;
+}
+
+.invoice {
+    width: 100%;
+    max-width: 384px; /* مناسب للطابعة الحرارية */
+    height: auto;
+    background-color: white;
+    padding: 5px;
+    box-sizing: border-box;
+    direction: rtl;
+    font-size: 12px;
+    border: 1px solid #000;
+}
+
+.invoice h3 {
+    text-align: center;
+}
+
+.invoice p {
+    line-height: 1.2;
+}
+
+.invoice table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.invoice th, .invoice td {
+    border: 1px solid black;
+    text-align: right;
+}
+
+.invoice tfoot td {
+    border-top: 2px solid black;
+    font-weight: bold;
+}
+
+.btn {
+    margin: 10px 0;
+}
+
+.btn button {
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.footer {
+    width: 100%;
+    text-align: center;
+    margin-top: 5px;
+}
+
+.footer strong {
+    font-size: 16px;
+}
+
+/* Print styles */
+@media print {
+
+    .resete {
+        background: none;
+        width: 100%;
+        height: auto; /* الطول يتحدد حسب محتوى الفاتورة */
+        min-height: 50px; /* طول أقل للفاتورة الصغيرة */
+        max-width: 384px; /* عرض ثابت حسب طابعة 80mm */
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start; /* يبدأ من الأعلى */
+        align-items: center;
+    }
+
+    .btn, .btnBack {
+        display: none; /* إخفاء الأزرار */
+    }
+
+    .invoice {
+        max-width: 384px;
+        width: 100%;
+        height: auto;
+        padding: 5px;
+        font-size: 12px;
+        box-sizing: border-box;
+        border: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start; /* العناصر قريبة من بعض */
+    }
+
+    .invoice h3 {
+        margin: 2px 0;
+        font-size: 14px;
+    }
+
+    .invoice p {
+        font-size: 12px;
+    }
+
+    .invoice table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+    }
+
+    .invoice th, .invoice td {
+        border: 1px solid black;
+        padding: 1px 3px;
+        text-align: right;
+        font-size: 12px;
+    }
+
+    .invoice tfoot td {
+        border-top: 2px solid black;
+        font-weight: bold;
+        font-size: 12px;
+    }
+
+    .footer {
+        text-align: center;
+        font-size: 12px;
+    }
+}

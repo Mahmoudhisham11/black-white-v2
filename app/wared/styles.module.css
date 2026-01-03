@@ -1,0 +1,288 @@
+.wared {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  justify-content: start;
+  align-items: start;
+  background-color: var(--background);
+}
+
+.content {
+  width: 100%;
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 20px;
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.deleteSelectedBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: var(--error);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.deleteSelectedBtn:hover:not(:disabled) {
+  background: #d32f2f;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.deleteSelectedBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.searchBox {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 20px;
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+}
+
+.inputContainer {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dateLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.dateInput {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 15px;
+  font-family: "Tajawal", sans-serif;
+  color: var(--text-primary);
+  background: var(--surface-hover);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.dateInput:focus {
+  border-color: var(--main-color);
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+[data-theme="dark"] .dateInput:focus {
+  box-shadow: 0 0 0 3px rgba(100, 181, 246, 0.2);
+}
+
+
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+}
+
+.waredTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.waredTable th {
+  padding: 16px 12px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--surface-hover);
+  border-bottom: 2px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.waredTable td {
+  padding: 16px 12px;
+  text-align: right;
+  font-size: 14px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.waredTable tbody tr {
+  transition: all 0.2s ease;
+}
+
+.waredTable tbody tr:hover {
+  background-color: var(--surface-hover);
+}
+
+.waredTable tbody tr.selectedRow {
+  background-color: rgba(25, 118, 210, 0.1);
+  border-left: 3px solid var(--main-color);
+}
+
+.checkboxCell {
+  width: 50px;
+  text-align: center !important;
+}
+
+.checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--main-color);
+}
+
+.codeCell {
+  font-weight: 600;
+  color: var(--main-color) !important;
+  font-family: "Courier New", monospace;
+  text-align: center;
+}
+
+.nameCell {
+  font-weight: 600;
+  color: var(--text-primary) !important;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quantityCell {
+  font-weight: 600;
+  color: var(--text-primary) !important;
+  text-align: center;
+}
+
+.priceCell {
+  font-weight: 600;
+  color: var(--text-primary) !important;
+  font-family: "Courier New", monospace;
+}
+
+.dateCell {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.actionsCell {
+  text-align: center !important;
+}
+
+.deleteBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(244, 67, 54, 0.1);
+  color: var(--error);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 16px;
+}
+
+.deleteBtn:hover:not(:disabled) {
+  background: var(--error);
+  color: white;
+  transform: scale(1.1);
+}
+
+.deleteBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.emptyCell {
+  text-align: center !important;
+  padding: 40px !important;
+}
+
+.emptyState {
+  color: var(--text-tertiary);
+  font-size: 16px;
+  font-style: italic;
+}
+
+@media screen and (max-width: 768px) {
+  .content {
+    padding: 16px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .searchBox {
+    flex-direction: column;
+  }
+
+  .inputContainer {
+    width: 100%;
+  }
+
+  .waredTable {
+    min-width: 600px;
+  }
+
+  .waredTable th,
+  .waredTable td {
+    padding: 12px 8px;
+    font-size: 13px;
+  }
+}

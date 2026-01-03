@@ -1,0 +1,32 @@
+.statusBanner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 20px;
+  text-align: center;
+  z-index: 9999;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  font-family: "Tajawal", sans-serif;
+}
+
+.statusBanner.offline {
+  background: #ff6b6b;
+  color: white;
+}
+
+.statusBanner.online {
+  background: #4ecdc4;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .statusBanner {
+    font-size: 12px;
+    padding: 10px 16px;
+  }
+}
+
