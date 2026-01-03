@@ -15,24 +15,57 @@ import {
 } from "firebase/firestore";
 import { db } from "@/app/firebase";
 import { calculateSubtotal, calculateProfit } from "@/utils/cartHelpers";
+import { offlineAdd, offlineUpdate, offlineGet, offlineDoc } from "@/utils/firebaseOffline";
+
+// Helper function to check if online
+const isOnline = () => {
+  return typeof window !== "undefined" && navigator.onLine;
+};
+
+// Helper function to get next invoice number (works offline)
+// محسّن: استخدام localStorage أولاً للسرعة، ثم المزامنة مع Firebase في الخلفية
+const getNextInvoiceNumber = async () => {
+  if (typeof window === "undefined") return 1;
+  
+  try {
+    // استخدام localStorage أولاً للسرعة (حتى عند online)
+    const saved = localStorage.getItem("lastInvoiceNumber");
+    let currentNumber = saved ? parseInt(saved, 10) : 0;
+    const invoiceNumber = currentNumber + 1;
+    
+    // حفظ في localStorage فوراً
+    localStorage.setItem("lastInvoiceNumber", invoiceNumber.toString());
+    
+    // مزامنة مع Firebase في الخلفية (غير متزامن)
+    if (isOnline()) {
+      // تحديث Firebase في الخلفية بدون انتظار
+      setDoc(
+        doc(db, "counters", "invoiceCounter"),
+        { lastInvoiceNumber: invoiceNumber },
+        { merge: true }
+      ).catch((error) => {
+        console.error("Error syncing invoice number to Firebase:", error);
+        // إذا فشلت المزامنة، نحاول جلب الرقم من Firebase في المرة القادمة
+      });
+    }
+    
+    return invoiceNumber;
+  } catch (error) {
+    console.error("Error getting invoice number:", error);
+    // Fallback: استخدام localStorage فقط
+    const saved = localStorage.getItem("lastInvoiceNumber");
+    const currentNumber = saved ? parseInt(saved, 10) : 0;
+    const invoiceNumber = currentNumber + 1;
+    localStorage.setItem("lastInvoiceNumber", invoiceNumber.toString());
+    return invoiceNumber;
+  }
+};
 
 export const invoiceService = {
   async createInvoice(cart, clientData, shop, employee) {
     try {
-      // Get next invoice number
-      const counterRef = doc(db, "counters", "invoiceCounter");
-      const counterSnap = await getDoc(counterRef);
-      const currentNumber = counterSnap.exists()
-        ? counterSnap.data().lastInvoiceNumber || 0
-        : 0;
-      const invoiceNumber = currentNumber + 1;
-
-      // Update counter
-      await setDoc(
-        counterRef,
-        { lastInvoiceNumber: invoiceNumber },
-        { merge: true }
-      );
+      // Get next invoice number (works offline)
+      const invoiceNumber = await getNextInvoiceNumber();
 
       // Calculate totals
       const total = calculateSubtotal(cart);
@@ -53,10 +86,43 @@ export const invoiceService = {
         discountNotes: clientData.discountNotes || "",
       };
 
-      // Save invoice
-      const invoiceRef = await addDoc(collection(db, "dailySales"), saleData);
+      // Save invoice using offlineAdd (works offline)
+      const result = await offlineAdd("dailySales", saleData);
 
-      return { success: true, invoice: { id: invoiceRef.id, ...saleData } };
+      if (result.success) {
+        // Online: Invoice saved to Firebase
+        return { 
+          success: true, 
+          invoice: { id: result.id, ...saleData },
+          offline: false
+        };
+      } else {
+        // Offline: Invoice added to queue, save locally for printing
+        const tempId = result.queueId || `temp-${Date.now()}`;
+        
+        // Save invoice locally for printing and immediate display
+        if (typeof window !== "undefined") {
+          try {
+            const offlineInvoices = JSON.parse(
+              localStorage.getItem("offlineInvoices") || "[]"
+            );
+            offlineInvoices.push({ id: tempId, ...saleData });
+            localStorage.setItem("offlineInvoices", JSON.stringify(offlineInvoices));
+            
+            // إرسال event لتحديث القائمة فوراً
+            window.dispatchEvent(new Event("offlineInvoiceAdded"));
+          } catch (err) {
+            console.error("Error saving offline invoice:", err);
+          }
+        }
+
+        return { 
+          success: true, 
+          invoice: { id: tempId, ...saleData },
+          offline: true,
+          queueId: result.queueId
+        };
+      }
     } catch (error) {
       console.error("Error creating invoice:", error);
       return { success: false, error };

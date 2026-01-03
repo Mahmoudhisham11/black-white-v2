@@ -20,7 +20,10 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { useRouter } from "next/navigation";
 import Loader from "@/components/Loader/Loader";
-import { NotificationProvider, useNotification } from "@/contexts/NotificationContext";
+import {
+  NotificationProvider,
+  useNotification,
+} from "@/contexts/NotificationContext";
 import { FaRegTrashAlt } from "react-icons/fa";
 import ConfirmModal from "@/components/Main/Modals/ConfirmModal";
 
@@ -48,9 +51,11 @@ function ReportsContent() {
   const [selectedDeletedIds, setSelectedDeletedIds] = useState(new Set());
   const [selectedReturnIds, setSelectedReturnIds] = useState(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
-  
-  const shop = typeof window !== "undefined" ? localStorage.getItem("shop") : "";
-  const userName = typeof window !== "undefined" ? localStorage.getItem("userName") : "";
+
+  const shop =
+    typeof window !== "undefined" ? localStorage.getItem("shop") : "";
+  const userName =
+    typeof window !== "undefined" ? localStorage.getItem("userName") : "";
 
   // Convert date to milliseconds
   const toMillis = useCallback((dateField) => {
@@ -83,13 +88,13 @@ function ReportsContent() {
   useEffect(() => {
     const checkLock = async () => {
       if (typeof window === "undefined") return;
-      
+
       const userName = localStorage.getItem("userName");
       if (!userName) {
         router.push("/");
         return;
       }
-      
+
       try {
         const q = query(
           collection(db, "users"),
@@ -361,44 +366,56 @@ function ReportsContent() {
   }, []);
 
   // Handle select all for deleted products
-  const handleSelectAllDeleted = useCallback((checked) => {
-    if (checked) {
-      setSelectedDeletedIds(new Set(deletedProducts.map((item) => item.id)));
-    } else {
-      setSelectedDeletedIds(new Set());
-    }
-  }, [deletedProducts]);
+  const handleSelectAllDeleted = useCallback(
+    (checked) => {
+      if (checked) {
+        setSelectedDeletedIds(new Set(deletedProducts.map((item) => item.id)));
+      } else {
+        setSelectedDeletedIds(new Set());
+      }
+    },
+    [deletedProducts]
+  );
 
   // Handle select item for deleted products
-  const handleSelectDeletedItem = useCallback((id, checked) => {
-    const newSelected = new Set(selectedDeletedIds);
-    if (checked) {
-      newSelected.add(id);
-    } else {
-      newSelected.delete(id);
-    }
-    setSelectedDeletedIds(newSelected);
-  }, [selectedDeletedIds]);
+  const handleSelectDeletedItem = useCallback(
+    (id, checked) => {
+      const newSelected = new Set(selectedDeletedIds);
+      if (checked) {
+        newSelected.add(id);
+      } else {
+        newSelected.delete(id);
+      }
+      setSelectedDeletedIds(newSelected);
+    },
+    [selectedDeletedIds]
+  );
 
   // Handle select all for returns
-  const handleSelectAllReturns = useCallback((checked) => {
-    if (checked) {
-      setSelectedReturnIds(new Set(displayedReturns.map((ret) => ret.id)));
-    } else {
-      setSelectedReturnIds(new Set());
-    }
-  }, [displayedReturns]);
+  const handleSelectAllReturns = useCallback(
+    (checked) => {
+      if (checked) {
+        setSelectedReturnIds(new Set(displayedReturns.map((ret) => ret.id)));
+      } else {
+        setSelectedReturnIds(new Set());
+      }
+    },
+    [displayedReturns]
+  );
 
   // Handle select item for returns
-  const handleSelectReturnItem = useCallback((id, checked) => {
-    const newSelected = new Set(selectedReturnIds);
-    if (checked) {
-      newSelected.add(id);
-    } else {
-      newSelected.delete(id);
-    }
-    setSelectedReturnIds(newSelected);
-  }, [selectedReturnIds]);
+  const handleSelectReturnItem = useCallback(
+    (id, checked) => {
+      const newSelected = new Set(selectedReturnIds);
+      if (checked) {
+        newSelected.add(id);
+      } else {
+        newSelected.delete(id);
+      }
+      setSelectedReturnIds(newSelected);
+    },
+    [selectedReturnIds]
+  );
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteType, setDeleteType] = useState(""); // "deleted" or "returns"
@@ -408,7 +425,7 @@ function ReportsContent() {
     setIsDeleting(true);
     try {
       const batchInstance = writeBatch(db);
-      
+
       selectedDeletedIds.forEach((id) => {
         const docRef = doc(db, "deletedProducts", id);
         batchInstance.delete(docRef);
@@ -431,7 +448,7 @@ function ReportsContent() {
     setIsDeleting(true);
     try {
       const batchInstance = writeBatch(db);
-      
+
       selectedReturnIds.forEach((id) => {
         const docRef = doc(db, "returns", id);
         batchInstance.delete(docRef);
@@ -457,10 +474,18 @@ function ReportsContent() {
     }
   }, [deleteType, handleDeleteSelectedDeleted, handleDeleteSelectedReturns]);
 
-  const isAllDeletedSelected = deletedProducts.length > 0 && selectedDeletedIds.size === deletedProducts.length;
-  const isIndeterminateDeleted = selectedDeletedIds.size > 0 && selectedDeletedIds.size < deletedProducts.length;
-  const isAllReturnsSelected = displayedReturns.length > 0 && selectedReturnIds.size === displayedReturns.length;
-  const isIndeterminateReturns = selectedReturnIds.size > 0 && selectedReturnIds.size < displayedReturns.length;
+  const isAllDeletedSelected =
+    deletedProducts.length > 0 &&
+    selectedDeletedIds.size === deletedProducts.length;
+  const isIndeterminateDeleted =
+    selectedDeletedIds.size > 0 &&
+    selectedDeletedIds.size < deletedProducts.length;
+  const isAllReturnsSelected =
+    displayedReturns.length > 0 &&
+    selectedReturnIds.size === displayedReturns.length;
+  const isIndeterminateReturns =
+    selectedReturnIds.size > 0 &&
+    selectedReturnIds.size < displayedReturns.length;
 
   // Excel export
   const exportToExcel = useCallback(async () => {
@@ -591,7 +616,9 @@ function ReportsContent() {
         bookType: "xlsx",
         type: "array",
       });
-      const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+      const data = new Blob([excelBuffer], {
+        type: "application/octet-stream",
+      });
       saveAs(data, `Reports_${new Date().toLocaleDateString("ar-EG")}.xlsx`);
 
       success("✅ تم تصدير الملف بنجاح!");
@@ -647,7 +674,9 @@ function ReportsContent() {
           Number(item.quantity || 0);
 
         if (totalSales < itemTotalPrice) {
-          warning("⚠️ لا يمكن إرجاع هذا المنتج لأن إجمالي المبيعات أقل من سعره!");
+          warning(
+            "⚠️ لا يمكن إرجاع هذا المنتج لأن إجمالي المبيعات أقل من سعره!"
+          );
           return;
         }
 
@@ -763,7 +792,9 @@ function ReportsContent() {
           const deletePromises = empSnap.docs.map((d) => deleteDoc(d.ref));
           await Promise.all(deletePromises);
 
-          success(`✅ تم إرجاع ${item.name} وحُذفت الفاتورة لأنها أصبحت فارغة.`);
+          success(
+            `✅ تم إرجاع ${item.name} وحُذفت الفاتورة لأنها أصبحت فارغة.`
+          );
         }
 
         // Add masrofat record
@@ -819,14 +850,12 @@ function ReportsContent() {
             >
               {showReturns ? "إخفاء المرتجعات" : "عرض المرتجعات"}
             </button>
-            {canViewDeleted && (
-              <button
-                className={styles.toggleBtn}
-                onClick={() => setShowDeleted(!showDeleted)}
-              >
-                {showDeleted ? "إخفاء المحذوفات" : "عرض المحذوفات"}
-              </button>
-            )}
+            <button
+              className={styles.toggleBtn}
+              onClick={() => setShowDeleted(!showDeleted)}
+            >
+              {showDeleted ? "إخفاء المحذوفات" : "عرض المحذوفات"}
+            </button>
             {showDeleted && selectedDeletedIds.size > 0 && (
               <button
                 className={styles.deleteSelectedBtn}
@@ -855,7 +884,6 @@ function ReportsContent() {
             )}
           </div>
         </div>
-
 
         {/* Search Box */}
         <div className={styles.searchBox}>
@@ -899,7 +927,6 @@ function ReportsContent() {
           </div>
         </div>
 
-
         {/* Table */}
         <div className={styles.tableWrapper}>
           <table className={styles.reportsTable}>
@@ -912,9 +939,12 @@ function ReportsContent() {
                         type="checkbox"
                         checked={isAllDeletedSelected}
                         ref={(input) => {
-                          if (input) input.indeterminate = isIndeterminateDeleted;
+                          if (input)
+                            input.indeterminate = isIndeterminateDeleted;
                         }}
-                        onChange={(e) => handleSelectAllDeleted(e.target.checked)}
+                        onChange={(e) =>
+                          handleSelectAllDeleted(e.target.checked)
+                        }
                         className={styles.checkbox}
                       />
                     </th>
@@ -931,9 +961,12 @@ function ReportsContent() {
                         type="checkbox"
                         checked={isAllReturnsSelected}
                         ref={(input) => {
-                          if (input) input.indeterminate = isIndeterminateReturns;
+                          if (input)
+                            input.indeterminate = isIndeterminateReturns;
                         }}
-                        onChange={(e) => handleSelectAllReturns(e.target.checked)}
+                        onChange={(e) =>
+                          handleSelectAllReturns(e.target.checked)
+                        }
                         className={styles.checkbox}
                       />
                     </th>
@@ -974,15 +1007,23 @@ function ReportsContent() {
                       : item.deletedAt || "-";
 
                     return (
-                      <tr 
-                        key={`deleted-${item.id || `index-${index}`}-${index}-${delMs || Date.now()}`}
-                        className={selectedDeletedIds.has(item.id) ? styles.selectedRow : ""}
+                      <tr
+                        key={`deleted-${item.id || `index-${index}`}-${index}-${
+                          delMs || Date.now()
+                        }`}
+                        className={
+                          selectedDeletedIds.has(item.id)
+                            ? styles.selectedRow
+                            : ""
+                        }
                       >
                         <td className={styles.checkboxCell}>
                           <input
                             type="checkbox"
                             checked={selectedDeletedIds.has(item.id)}
-                            onChange={(e) => handleSelectDeletedItem(item.id, e.target.checked)}
+                            onChange={(e) =>
+                              handleSelectDeletedItem(item.id, e.target.checked)
+                            }
                             className={styles.checkbox}
                           />
                         </td>
@@ -1020,19 +1061,29 @@ function ReportsContent() {
                       : ret.returnDate || "-";
 
                     return (
-                      <tr 
-                        key={`return-${ret.id || `index-${index}`}-${index}-${ret.originalInvoiceId || ""}-${retMs || Date.now()}`}
-                        className={selectedReturnIds.has(ret.id) ? styles.selectedRow : ""}
+                      <tr
+                        key={`return-${ret.id || `index-${index}`}-${index}-${
+                          ret.originalInvoiceId || ""
+                        }-${retMs || Date.now()}`}
+                        className={
+                          selectedReturnIds.has(ret.id)
+                            ? styles.selectedRow
+                            : ""
+                        }
                       >
                         <td className={styles.checkboxCell}>
                           <input
                             type="checkbox"
                             checked={selectedReturnIds.has(ret.id)}
-                            onChange={(e) => handleSelectReturnItem(ret.id, e.target.checked)}
+                            onChange={(e) =>
+                              handleSelectReturnItem(ret.id, e.target.checked)
+                            }
                             className={styles.checkbox}
                           />
                         </td>
-                        <td className={styles.codeCell}>{ret.item?.code || "-"}</td>
+                        <td className={styles.codeCell}>
+                          {ret.item?.code || "-"}
+                        </td>
                         <td className={styles.nameCell}>
                           {ret.item?.name || "-"}
                         </td>
@@ -1058,12 +1109,16 @@ function ReportsContent() {
                 </tr>
               ) : (
                 displayedReports.map((report, index) => {
-                  const total = Number(
-                    report.total ?? report.subtotal ?? 0
-                  );
-                  const reportDateMs = report.date?.seconds ? report.date.seconds * 1000 : Date.now();
+                  const total = Number(report.total ?? report.subtotal ?? 0);
+                  const reportDateMs = report.date?.seconds
+                    ? report.date.seconds * 1000
+                    : Date.now();
                   return (
-                    <tr key={`report-${report.id || `index-${index}`}-${index}-${reportDateMs}-${report.phone || ""}`}>
+                    <tr
+                      key={`report-${
+                        report.id || `index-${index}`
+                      }-${index}-${reportDateMs}-${report.phone || ""}`}
+                    >
                       <td className={styles.nameCell}>
                         {report.clientName || "-"}
                       </td>
@@ -1073,7 +1128,9 @@ function ReportsContent() {
                       <td className={styles.quantityCell}>
                         {report.cart?.length || 0}
                       </td>
-                      <td className={styles.priceCell}>{total.toFixed(2)} EGP</td>
+                      <td className={styles.priceCell}>
+                        {total.toFixed(2)} EGP
+                      </td>
                       <td className={styles.dateCell}>
                         {report.date
                           ? new Date(
@@ -1121,9 +1178,9 @@ function ReportsContent() {
             <p>
               <strong>التاريخ:</strong>{" "}
               {selectedReport.date
-                ? new Date(
-                    selectedReport.date.seconds * 1000
-                  ).toLocaleString("ar-EG")
+                ? new Date(selectedReport.date.seconds * 1000).toLocaleString(
+                    "ar-EG"
+                  )
                 : "-"}
             </p>
             <p>

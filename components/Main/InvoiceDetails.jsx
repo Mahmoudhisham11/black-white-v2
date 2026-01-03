@@ -3,13 +3,13 @@ import styles from "./styles.module.css";
 import { IoIosCloseCircle } from "react-icons/io";
 import { PERMISSIONS } from "@/constants/config";
 
-export default function InvoiceDetails({ 
-  invoice, 
-  onClose, 
-  onPrint, 
+export default function InvoiceDetails({
+  invoice,
+  onClose,
+  onPrint,
   onReturn,
   returningItemsState,
-  userName 
+  userName,
 }) {
   if (!invoice) return null;
 
@@ -34,7 +34,10 @@ export default function InvoiceDetails({
         </button>
       </div>
 
-      <button onClick={() => onPrint(invoice.invoiceNumber)} className={styles.printBtn}>
+      <button
+        onClick={() => onPrint(invoice.invoiceNumber)}
+        className={styles.printBtn}
+      >
         🖨️ طباعة فاتورة
       </button>
 
@@ -51,7 +54,7 @@ export default function InvoiceDetails({
         <p>
           <strong>🕒 التاريخ:</strong> {formatDate(invoice.date)}
         </p>
-        
+
         {canViewProfit && invoice.profit !== undefined && (
           <p>
             <strong>📈 ربح الفاتورة:</strong> {invoice.profit} جنيه
@@ -61,12 +64,10 @@ export default function InvoiceDetails({
         {invoice.discount > 0 && (
           <p>
             <strong>🔖 الخصم:</strong> {invoice.discount} جنيه
-            {invoice.discountNotes
-              ? ` (ملاحظة: ${invoice.discountNotes})`
-              : ""}
+            {invoice.discountNotes ? ` (ملاحظة: ${invoice.discountNotes})` : ""}
           </p>
         )}
-        
+
         <p>
           <strong>💰 الإجمالي:</strong> {invoice.total} جنيه
         </p>
@@ -87,31 +88,31 @@ export default function InvoiceDetails({
           </thead>
           <tbody>
             {invoice.cart?.map((item, idx) => {
-              const itemKey = `${item.code}_${item.color || ""}_${item.size || ""}`;
+              const itemKey = `${item.code}_${item.color || ""}_${
+                item.size || ""
+              }`;
               const isReturning = returningItemsState[itemKey];
-              
+
               return (
                 <tr key={idx}>
                   <td>{item.code}</td>
                   <td>
-                    {item.name} 
+                    {item.name}
                     {item.color ? ` - ${item.color}` : ""}{" "}
                     {item.size ? ` - ${item.size}` : ""}
                   </td>
                   <td>{item.sellPrice}</td>
                   {canViewProfit && <td>{item.buyPrice}</td>}
                   <td>{item.quantity}</td>
-                  {canReturn && (
-                    <td>
-                      <button
-                        className={styles.returnBtn}
-                        disabled={isReturning}
-                        onClick={() => onReturn(item)}
-                      >
-                        {isReturning ? "جاري التنفيذ..." : "مرتجع"}
-                      </button>
-                    </td>
-                  )}
+                  <td>
+                    <button
+                      className={styles.returnBtn}
+                      disabled={isReturning}
+                      onClick={() => onReturn(item)}
+                    >
+                      {isReturning ? "جاري التنفيذ..." : "مرتجع"}
+                    </button>
+                  </td>
                 </tr>
               );
             })}
