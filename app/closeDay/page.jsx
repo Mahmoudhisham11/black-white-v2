@@ -53,6 +53,45 @@ function CloseDayContent() {
     }
   }, []);
 
+  // Helper function to load offline closes
+  const loadOfflineCloses = useCallback((shop, dateStr) => {
+    if (typeof window === "undefined") return [];
+    try {
+      const saved = localStorage.getItem("offlineCloses");
+      if (!saved) return [];
+      const offlineCloses = JSON.parse(saved);
+      return offlineCloses.filter(close => 
+        close.shop === shop && close.closedAt === dateStr
+      );
+    } catch (error) {
+      console.error("Error loading offline closes:", error);
+      return [];
+    }
+  }, []);
+
+  // Helper function to merge closes
+  const mergeCloses = useCallback((firebaseCloses, offlineCloses) => {
+    const merged = [...firebaseCloses];
+    const firebaseIds = new Set(firebaseCloses.map(c => c.id));
+    
+    offlineCloses.forEach(offlineClose => {
+      if (!firebaseIds.has(offlineClose.id)) {
+        merged.push(offlineClose);
+      }
+    });
+    
+    // ترتيب حسب الوقت
+    return merged.sort((a, b) => {
+      const ta = a.closedAtTimestamp?.toDate
+        ? a.closedAtTimestamp.toDate().getTime()
+        : (a.closedAtTimestamp ? new Date(a.closedAtTimestamp).getTime() : 0);
+      const tb = b.closedAtTimestamp?.toDate
+        ? b.closedAtTimestamp.toDate().getTime()
+        : (b.closedAtTimestamp ? new Date(b.closedAtTimestamp).getTime() : 0);
+      return ta - tb;
+    });
+  }, []);
+
   // Load closes for a given date
   useEffect(() => {
     if (!shop) return;
@@ -62,6 +101,14 @@ function CloseDayContent() {
 
     setLoading(true);
     setError(null);
+
+    // تحميل التقفيلات المحلية فوراً
+    const offlineCloses = loadOfflineCloses(shop, ddmmyyyy);
+    if (offlineCloses.length > 0) {
+      setCloses(offlineCloses);
+      setSelectedCloseIndex(0);
+      setLoading(false);
+    }
 
     const todayISO = new Date().toISOString().split("T")[0];
     const todayDDMMYYYY = toDDMMYYYY(todayISO);
@@ -75,32 +122,52 @@ function CloseDayContent() {
       );
       const unsub = onSnapshot(
         q,
+        {
+          includeMetadataChanges: false,
+        },
         (snapshot) => {
-          const docs = snapshot.docs.map((doc) => ({
+          const firebaseDocs = snapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
           }));
-          docs.sort((a, b) => {
-            const ta = a.closedAtTimestamp?.toDate
-              ? a.closedAtTimestamp.toDate().getTime()
-              : 0;
-            const tb = b.closedAtTimestamp?.toDate
-              ? b.closedAtTimestamp.toDate().getTime()
-              : 0;
-            return ta - tb;
-          });
-          setCloses(docs);
-          setSelectedCloseIndex(docs.length ? 0 : -1);
+          
+          // دمج مع التقفيلات المحلية
+          const offlineCloses = loadOfflineCloses(shop, ddmmyyyy);
+          const merged = mergeCloses(firebaseDocs, offlineCloses);
+          
+          setCloses(merged);
+          setSelectedCloseIndex(merged.length ? 0 : -1);
           setLoading(false);
         },
         (err) => {
           console.error("closeDayHistory onSnapshot error:", err);
+          // عند الخطأ، نستخدم التقفيلات المحلية فقط
+          const offlineCloses = loadOfflineCloses(shop, ddmmyyyy);
+          if (offlineCloses.length > 0) {
+            setCloses(offlineCloses);
+            setSelectedCloseIndex(0);
+          }
           setError("حدث خطأ أثناء جلب البيانات");
           showError("حدث خطأ أثناء جلب بيانات التقفيلات");
           setLoading(false);
         }
       );
-      return () => unsub();
+
+      // Listen for localStorage changes
+      const handleStorageChange = () => {
+        setCloses(prevCloses => {
+          const offlineCloses = loadOfflineCloses(shop, ddmmyyyy);
+          const firebaseCloses = prevCloses.filter(c => !c.id?.startsWith("offline-close-"));
+          return mergeCloses(firebaseCloses, offlineCloses);
+        });
+      };
+
+      window.addEventListener("offlineCloseAdded", handleStorageChange);
+
+      return () => {
+        unsub();
+        window.removeEventListener("offlineCloseAdded", handleStorageChange);
+      };
     } else {
       // التواريخ القديمة → قراءة مرة واحدة فقط
       getDocs(
@@ -111,31 +178,33 @@ function CloseDayContent() {
         )
       )
         .then((snapshot) => {
-          const docs = snapshot.docs.map((doc) => ({
+          const firebaseDocs = snapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
           }));
-          docs.sort((a, b) => {
-            const ta = a.closedAtTimestamp?.toDate
-              ? a.closedAtTimestamp.toDate().getTime()
-              : 0;
-            const tb = b.closedAtTimestamp?.toDate
-              ? b.closedAtTimestamp.toDate().getTime()
-              : 0;
-            return ta - tb;
-          });
-          setCloses(docs);
-          setSelectedCloseIndex(docs.length ? 0 : -1);
+          
+          // دمج مع التقفيلات المحلية
+          const offlineCloses = loadOfflineCloses(shop, ddmmyyyy);
+          const merged = mergeCloses(firebaseDocs, offlineCloses);
+          
+          setCloses(merged);
+          setSelectedCloseIndex(merged.length ? 0 : -1);
           setLoading(false);
         })
         .catch((err) => {
           console.error("closeDayHistory getDocs error:", err);
+          // عند الخطأ، نستخدم التقفيلات المحلية فقط
+          const offlineCloses = loadOfflineCloses(shop, ddmmyyyy);
+          if (offlineCloses.length > 0) {
+            setCloses(offlineCloses);
+            setSelectedCloseIndex(0);
+          }
           setError("حدث خطأ أثناء جلب البيانات");
           showError("حدث خطأ أثناء جلب بيانات التقفيلات");
           setLoading(false);
         });
     }
-  }, [dateISO, shop, toDDMMYYYY, showError]);
+  }, [dateISO, shop, toDDMMYYYY, showError, loadOfflineCloses, mergeCloses]);
 
   const selectedClose = closes[selectedCloseIndex] || null;
 
@@ -326,9 +395,18 @@ function CloseDayContent() {
             </div>
           ) : (
             closes.map((c, idx) => {
-              const timeLabel = c.closedAtTimestamp?.toDate
-                ? c.closedAtTimestamp.toDate().toLocaleTimeString("ar-EG")
-                : c.closedAt ?? "-";
+              let timeLabel = "-";
+              if (c.closedAtTimestamp) {
+                if (c.closedAtTimestamp.toDate) {
+                  timeLabel = c.closedAtTimestamp.toDate().toLocaleTimeString("ar-EG");
+                } else if (typeof c.closedAtTimestamp === "string") {
+                  timeLabel = new Date(c.closedAtTimestamp).toLocaleTimeString("ar-EG");
+                } else if (c.closedAtTimestamp.seconds) {
+                  timeLabel = new Date(c.closedAtTimestamp.seconds * 1000).toLocaleTimeString("ar-EG");
+                }
+              } else if (c.closedAt) {
+                timeLabel = c.closedAt;
+              }
               const closedBy = c.closedBy ?? "-";
               const isSelected = idx === selectedCloseIndex;
               return (
@@ -341,6 +419,11 @@ function CloseDayContent() {
                 >
                   <div className={styles.cardTime}>{timeLabel}</div>
                   <div className={styles.cardBy}>بواسطة: {closedBy}</div>
+                  {c.id?.startsWith("offline-close-") && (
+                    <div className={styles.offlineBadge} style={{ fontSize: "10px", color: "#FF9800", marginTop: "5px" }}>
+                      Offline
+                    </div>
+                  )}
                 </div>
               );
             })

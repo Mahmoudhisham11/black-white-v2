@@ -91,6 +91,11 @@ class OfflineQueue {
         item.syncedAt = new Date().toISOString();
         results.success++;
         console.log(`✅ Synced operation: ${item.id}`);
+        
+        // حذف الفواتير المحلية بعد المزامنة الناجحة
+        if (item.collectionName === "dailySales" && item.action === "add" && item.data) {
+          this.removeOfflineInvoice(item);
+        }
       } catch (error) {
         item.retries = (item.retries || 0) + 1;
         results.failed++;
@@ -109,6 +114,11 @@ class OfflineQueue {
     // حذف العمليات المكتملة
     this.queue = this.queue.filter((item) => item.synced || item.retries >= 5);
     this.saveQueue();
+
+    // تنظيف نهائي لجميع الفواتير المزامنة من localStorage
+    if (results.success > 0) {
+      this.cleanupSyncedInvoices();
+    }
 
     this.syncing = false;
     console.log(`✅ Sync completed: ${results.success} success, ${results.failed} failed`);
@@ -143,6 +153,191 @@ class OfflineQueue {
 
       default:
         throw new Error(`Unknown operation: ${action}`);
+    }
+  }
+
+  // حذف الفاتورة المحلية من localStorage بعد المزامنة الناجحة
+  removeOfflineInvoice(queueItem) {
+    if (typeof window === "undefined") return;
+    
+    try {
+      const offlineInvoices = JSON.parse(
+        localStorage.getItem("offlineInvoices") || "[]"
+      );
+      
+      if (offlineInvoices.length === 0) {
+        console.log("📝 No offline invoices to remove");
+        return;
+      }
+      
+      const invoiceData = queueItem.data;
+      const queueId = queueItem.id;
+      
+      console.log(`🔍 Searching for invoice to remove:`, {
+        queueId,
+        invoiceNumber: invoiceData.invoiceNumber,
+        total: invoiceData.total,
+        shop: invoiceData.shop,
+        offlineInvoicesCount: offlineInvoices.length
+      });
+      
+      // البحث عن الفاتورة المحلية المطابقة
+      let foundIndex = -1;
+      
+      // الطريقة الأولى: البحث عن طريق queueId (الأكثر دقة)
+      foundIndex = offlineInvoices.findIndex(inv => inv.queueId === queueId);
+      if (foundIndex !== -1) {
+        console.log(`✅ Found invoice by queueId: ${queueId} at index ${foundIndex}`);
+      } else {
+        // الطريقة الثانية: البحث عن طريق invoiceNumber + total + shop
+        // هذا للفواتير القديمة التي قد لا تحتوي على queueId
+        foundIndex = offlineInvoices.findIndex(inv => {
+          // مطابقة invoiceNumber و total و shop
+          if (
+            inv.invoiceNumber === invoiceData.invoiceNumber &&
+            inv.total === invoiceData.total &&
+            inv.shop === invoiceData.shop
+          ) {
+            // التحقق من التاريخ (معالجة جميع أنواع التاريخ)
+            let invDate = null;
+            if (inv.date instanceof Date) {
+              invDate = inv.date.toISOString().split('T')[0];
+            } else if (inv.date?.toDate) {
+              invDate = inv.date.toDate().toISOString().split('T')[0];
+            } else if (inv.date?.seconds) {
+              invDate = new Date(inv.date.seconds * 1000).toISOString().split('T')[0];
+            } else if (typeof inv.date === "string") {
+              invDate = new Date(inv.date).toISOString().split('T')[0];
+            }
+            
+            let dataDate = null;
+            if (invoiceData.date instanceof Date) {
+              dataDate = invoiceData.date.toISOString().split('T')[0];
+            } else if (invoiceData.date?.toDate) {
+              dataDate = invoiceData.date.toDate().toISOString().split('T')[0];
+            } else if (invoiceData.date?.seconds) {
+              dataDate = new Date(invoiceData.date.seconds * 1000).toISOString().split('T')[0];
+            } else if (typeof invoiceData.date === "string") {
+              dataDate = new Date(invoiceData.date).toISOString().split('T')[0];
+            }
+            
+            // إذا تطابق التاريخ أو لم يكن التاريخ متاحاً، نعتبره مطابقاً
+            if (invDate && dataDate) {
+              return invDate === dataDate;
+            } else if (!invDate && !dataDate) {
+              // إذا لم يكن هناك تاريخ في كليهما، نعتبره مطابقاً
+              return true;
+            }
+            
+            return false;
+          }
+          return false;
+        });
+        
+        if (foundIndex !== -1) {
+          console.log(`✅ Found invoice by invoiceNumber + total + shop: ${invoiceData.invoiceNumber} at index ${foundIndex}`);
+        }
+      }
+      
+      // إذا وجدنا الفاتورة، نحذفها
+      if (foundIndex !== -1) {
+        const removedInvoice = offlineInvoices[foundIndex];
+        const filtered = offlineInvoices.filter((_, index) => index !== foundIndex);
+        localStorage.setItem("offlineInvoices", JSON.stringify(filtered));
+        console.log(`🗑️ Removed synced invoice from localStorage:`, {
+          invoiceNumber: removedInvoice.invoiceNumber,
+          total: removedInvoice.total,
+          queueId: removedInvoice.queueId || "N/A"
+        });
+        
+        // إرسال event لتحديث القائمة
+        window.dispatchEvent(new Event("offlineInvoiceRemoved"));
+      } else {
+        console.warn(`⚠️ Could not find matching invoice to remove:`, {
+          queueId,
+          invoiceNumber: invoiceData.invoiceNumber,
+          total: invoiceData.total,
+          shop: invoiceData.shop,
+          availableInvoices: offlineInvoices.map(inv => ({
+            invoiceNumber: inv.invoiceNumber,
+            total: inv.total,
+            queueId: inv.queueId || "N/A"
+          }))
+        });
+      }
+    } catch (error) {
+      console.error("❌ Error removing offline invoice:", error);
+    }
+  }
+
+  // تنظيف نهائي لجميع الفواتير المزامنة من localStorage
+  cleanupSyncedInvoices() {
+    if (typeof window === "undefined") return;
+    
+    try {
+      // جلب جميع الفواتير المحلية
+      const offlineInvoices = JSON.parse(
+        localStorage.getItem("offlineInvoices") || "[]"
+      );
+      
+      if (offlineInvoices.length === 0) {
+        return;
+      }
+      
+      // جلب جميع العمليات المزامنة من dailySales
+      const syncedDailySales = this.queue.filter(
+        item => 
+          item.synced && 
+          item.collectionName === "dailySales" && 
+          item.action === "add"
+      );
+      
+      if (syncedDailySales.length === 0) {
+        return;
+      }
+      
+      // إنشاء Set من queueIds المزامنة
+      const syncedQueueIds = new Set(syncedDailySales.map(item => item.id));
+      
+      // إنشاء Set من مفاتيح الفواتير المزامنة (invoiceNumber + total + shop)
+      const syncedInvoiceKeys = new Set(
+        syncedDailySales
+          .filter(item => item.data)
+          .map(item => {
+            const data = item.data;
+            return `${data.invoiceNumber}-${data.total}-${data.shop || ""}`;
+          })
+      );
+      
+      // تصفية الفواتير المحلية - إزالة المزامنة
+      const cleanedInvoices = offlineInvoices.filter(inv => {
+        // إذا كانت الفاتورة لها queueId مزامن، احذفها
+        if (inv.queueId && syncedQueueIds.has(inv.queueId)) {
+          console.log(`🧹 Removing synced invoice by queueId: ${inv.invoiceNumber}`);
+          return false;
+        }
+        
+        // إذا كانت الفاتورة تطابق فاتورة مزامنة (invoiceNumber + total + shop)، احذفها
+        const invoiceKey = `${inv.invoiceNumber}-${inv.total}-${inv.shop || ""}`;
+        if (syncedInvoiceKeys.has(invoiceKey)) {
+          console.log(`🧹 Removing synced invoice by key: ${inv.invoiceNumber}`);
+          return false;
+        }
+        
+        return true; // الإبقاء على الفاتورة
+      });
+      
+      // حفظ الفواتير المحدثة
+      if (cleanedInvoices.length < offlineInvoices.length) {
+        localStorage.setItem("offlineInvoices", JSON.stringify(cleanedInvoices));
+        const removedCount = offlineInvoices.length - cleanedInvoices.length;
+        console.log(`🧹 Cleaned ${removedCount} synced invoice(s) from localStorage (final cleanup)`);
+        
+        // إرسال event لتحديث القائمة
+        window.dispatchEvent(new Event("offlineInvoiceRemoved"));
+      }
+    } catch (error) {
+      console.error("❌ Error in final cleanup:", error);
     }
   }
 

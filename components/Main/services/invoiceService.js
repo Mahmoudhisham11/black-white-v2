@@ -106,7 +106,12 @@ export const invoiceService = {
             const offlineInvoices = JSON.parse(
               localStorage.getItem("offlineInvoices") || "[]"
             );
-            offlineInvoices.push({ id: tempId, ...saleData });
+            // حفظ queueId مع الفاتورة لتسهيل الحذف بعد المزامنة
+            offlineInvoices.push({ 
+              id: tempId, 
+              queueId: result.queueId, // حفظ queueId للربط مع القائمة
+              ...saleData 
+            });
             localStorage.setItem("offlineInvoices", JSON.stringify(offlineInvoices));
             
             // إرسال event لتحديث القائمة فوراً

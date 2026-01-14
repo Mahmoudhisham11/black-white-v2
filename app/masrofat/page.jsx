@@ -1,7 +1,7 @@
 "use client";
 import SideBar from "@/components/SideBar/page";
 import styles from "./styles.module.css";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { FaRegTrashAlt } from "react-icons/fa";
 import { MdOutlineEdit } from "react-icons/md";
 import { FaPlus, FaMinus } from "react-icons/fa6";
@@ -18,6 +18,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "@/app/firebase";
+import { offlineAdd, offlineUpdate, offlineDelete } from "@/utils/firebaseOffline";
 import { GiReceiveMoney } from "react-icons/gi";
 import { FaQuestion } from "react-icons/fa";
 import { CiSearch } from "react-icons/ci";
@@ -78,33 +79,112 @@ function MasrofatContent() {
     checkLock();
   }, [router, showError]);
 
-  // عرض بيانات المصروفات من Firestore
+  // Helper function to load offline masrofat from queue
+  const loadOfflineMasrofat = useCallback((shop) => {
+    if (typeof window === "undefined") return [];
+    try {
+      const saved = localStorage.getItem("offlineQueue");
+      if (!saved) return [];
+      const queue = JSON.parse(saved);
+      
+      // استخراج المصاريف من قائمة الانتظار
+      return queue
+        .filter(op => 
+          !op.synced && 
+          op.collectionName === "masrofat" && 
+          op.action === "add" &&
+          op.data?.shop === shop
+        )
+        .map(op => ({
+          id: op.id,
+          ...op.data,
+          isOffline: true
+        }));
+    } catch (error) {
+      console.error("Error loading offline masrofat:", error);
+      return [];
+    }
+  }, []);
+
+  // Helper function to merge masrofat
+  const mergeMasrofat = useCallback((firebaseMasrofat, offlineMasrofat) => {
+    const merged = [...firebaseMasrofat];
+    const firebaseIds = new Set(firebaseMasrofat.map(m => m.id));
+    
+    offlineMasrofat.forEach(offlineMasrof => {
+      if (!firebaseIds.has(offlineMasrof.id)) {
+        merged.push(offlineMasrof);
+      }
+    });
+    
+    // ترتيب حسب التاريخ تنازليًا
+    return merged.sort((a, b) => {
+      const dateA = a.date?.toDate ? a.date.toDate().getTime() : (a.date?.seconds || 0) * 1000;
+      const dateB = b.date?.toDate ? b.date.toDate().getTime() : (b.date?.seconds || 0) * 1000;
+      return dateB - dateA;
+    });
+  }, []);
+
+  // عرض بيانات المصروفات من Firestore + localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storageShop = localStorage.getItem("shop");
       setShop(storageShop);
 
+      // تحميل المصاريف المحلية فوراً
+      const offlineMasrofat = loadOfflineMasrofat(storageShop);
+      if (offlineMasrofat.length > 0) {
+        setMasrofatList(offlineMasrofat);
+      }
+
       const q = query(
         collection(db, "masrofat"),
         where("shop", "==", storageShop)
       );
-      const unsub = onSnapshot(q, (snapshot) => {
-        const data = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        // ترتيب حسب التاريخ تنازليًا
-        data.sort((a, b) => {
-          const dateA = a.date?.toDate ? a.date.toDate().getTime() : (a.date?.seconds || 0) * 1000;
-          const dateB = b.date?.toDate ? b.date.toDate().getTime() : (b.date?.seconds || 0) * 1000;
-          return dateB - dateA;
-        });
-        setMasrofatList(data);
-      });
+      const unsub = onSnapshot(
+        q,
+        {
+          includeMetadataChanges: false,
+        },
+        (snapshot) => {
+          const firebaseData = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          
+          // دمج مع المصاريف المحلية
+          const offlineMasrofat = loadOfflineMasrofat(storageShop);
+          const merged = mergeMasrofat(firebaseData, offlineMasrofat);
+          
+          setMasrofatList(merged);
+        },
+        (err) => {
+          console.error("Error fetching masrofat:", err);
+          // عند الخطأ، نستخدم المصاريف المحلية فقط
+          const offlineMasrofat = loadOfflineMasrofat(storageShop);
+          if (offlineMasrofat.length > 0) {
+            setMasrofatList(offlineMasrofat);
+          }
+        }
+      );
 
-      return () => unsub();
+      // Listen for localStorage changes
+      const handleStorageChange = () => {
+        setMasrofatList(prevList => {
+          const offlineMasrofat = loadOfflineMasrofat(storageShop);
+          const firebaseMasrofat = prevList.filter(m => !m.isOffline);
+          return mergeMasrofat(firebaseMasrofat, offlineMasrofat);
+        });
+      };
+
+      window.addEventListener("offlineMasrofAdded", handleStorageChange);
+
+      return () => {
+        unsub();
+        window.removeEventListener("offlineMasrofAdded", handleStorageChange);
+      };
     }
-  }, []);
+  }, [loadOfflineMasrofat, mergeMasrofat]);
 
   // جلب المبيعات اليومية من dailySales
   useEffect(() => {
@@ -189,14 +269,25 @@ function MasrofatContent() {
       .padStart(2, "0")}/${now.getFullYear()}`;
 
     try {
-      await addDoc(collection(db, "masrofat"), {
+      const masrofData = {
         masrof: masrofValue,
         reason: finalReason,
         date: formattedDate,
         shop,
-      });
+      };
 
-      success("تم إضافة المصروف بنجاح");
+      // استخدام offlineAdd لدعم offline
+      const result = await offlineAdd("masrofat", masrofData);
+
+      if (result.success) {
+        success("تم إضافة المصروف بنجاح");
+      } else {
+        // Offline: تمت الإضافة للقائمة
+        success("تم إضافة المصروف بنجاح (سيتم المزامنة عند عودة الاتصال)");
+        // إرسال event لتحديث القائمة فوراً
+        window.dispatchEvent(new Event("offlineMasrofAdded"));
+      }
+
       setMasrof("");
       setReason("");
       setActive(false);
@@ -247,13 +338,24 @@ function MasrofatContent() {
     }
 
     try {
-      await updateDoc(doc(db, "masrofat", editingMasrof.id), {
+      // استخدام offlineUpdate لدعم offline
+      const result = await offlineUpdate("masrofat", editingMasrof.id, {
         masrof: newMasrof,
       });
 
-      success(
-        `تم ${editMode === "add" ? "زيادة" : "خصم"} المصروف بنجاح. المبلغ الجديد: ${newMasrof}`
-      );
+      if (result.success) {
+        success(
+          `تم ${editMode === "add" ? "زيادة" : "خصم"} المصروف بنجاح. المبلغ الجديد: ${newMasrof}`
+        );
+      } else {
+        // Offline: تمت الإضافة للقائمة
+        success(
+          `تم ${editMode === "add" ? "زيادة" : "خصم"} المصروف بنجاح. المبلغ الجديد: ${newMasrof} (سيتم المزامنة عند عودة الاتصال)`
+        );
+        // إرسال event لتحديث القائمة فوراً
+        window.dispatchEvent(new Event("offlineMasrofAdded"));
+      }
+
       setShowEditModal(false);
       setEditingMasrof(null);
       setEditAmount("");
@@ -283,16 +385,29 @@ function MasrofatContent() {
     try {
       if (selectedIds.size === 1) {
         const id = Array.from(selectedIds)[0];
-        await deleteDoc(doc(db, "masrofat", id));
-        success("تم حذف المصروف بنجاح");
+        // استخدام offlineDelete لدعم offline
+        const result = await offlineDelete("masrofat", id);
+        if (result.success) {
+          success("تم حذف المصروف بنجاح");
+        } else {
+          success("تم حذف المصروف بنجاح (سيتم المزامنة عند عودة الاتصال)");
+          // إرسال event لتحديث القائمة فوراً
+          window.dispatchEvent(new Event("offlineMasrofAdded"));
+        }
       } else {
-        const batch = writeBatch(db);
-        selectedIds.forEach(id => {
-          const docRef = doc(db, "masrofat", id);
-          batch.delete(docRef);
-        });
-        await batch.commit();
-        success(`تم حذف ${selectedIds.size} مصروف بنجاح`);
+        // حذف متعدد: استخدام Promise.all للتوازي
+        const deletePromises = Array.from(selectedIds).map(id => offlineDelete("masrofat", id));
+        const results = await Promise.all(deletePromises);
+        const successCount = results.filter(r => r.success).length;
+        const offlineCount = results.length - successCount;
+        
+        if (offlineCount > 0) {
+          success(`تم حذف ${selectedIds.size} مصروف بنجاح (${offlineCount} سيتم المزامنة عند عودة الاتصال)`);
+          // إرسال event لتحديث القائمة فوراً
+          window.dispatchEvent(new Event("offlineMasrofAdded"));
+        } else {
+          success(`تم حذف ${selectedIds.size} مصروف بنجاح`);
+        }
       }
       setSelectedIds(new Set());
     } catch (error) {

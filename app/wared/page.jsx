@@ -10,6 +10,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import { offlineDelete } from "@/utils/firebaseOffline";
 import { FaRegTrashAlt } from "react-icons/fa";
 import { NotificationProvider, useNotification } from "@/contexts/NotificationContext";
 import ConfirmModal from "@/components/Main/Modals/ConfirmModal";
@@ -102,14 +103,17 @@ function WaredContent() {
   const confirmDeleteSelected = async () => {
     setIsDeleting(true);
     try {
-      const batch = writeBatch(db);
-      selectedIds.forEach(id => {
-        const docRef = doc(db, "wared", id);
-        batch.delete(docRef);
-      });
-
-      await batch.commit();
-      success(`تم حذف ${selectedIds.size} منتج بنجاح`);
+      // استخدام offlineDelete لدعم offline (متوازي)
+      const deletePromises = Array.from(selectedIds).map(id => offlineDelete("wared", id));
+      const results = await Promise.all(deletePromises);
+      const successCount = results.filter(r => r.success).length;
+      const offlineCount = results.length - successCount;
+      
+      if (offlineCount > 0) {
+        success(`تم حذف ${selectedIds.size} منتج بنجاح (${offlineCount} سيتم المزامنة عند عودة الاتصال)`);
+      } else {
+        success(`تم حذف ${selectedIds.size} منتج بنجاح`);
+      }
       setSelectedIds(new Set());
     } catch (err) {
       console.error("Error deleting products:", err);
@@ -131,8 +135,13 @@ function WaredContent() {
 
     setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, "wared", id));
-      success("تم حذف المنتج بنجاح");
+      // استخدام offlineDelete لدعم offline
+      const result = await offlineDelete("wared", id);
+      if (result.success) {
+        success("تم حذف المنتج بنجاح");
+      } else {
+        success("تم حذف المنتج بنجاح (سيتم المزامنة عند عودة الاتصال)");
+      }
       setSelectedIds(new Set());
     } catch (err) {
       console.error("Error deleting product:", err);

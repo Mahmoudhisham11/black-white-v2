@@ -4,7 +4,7 @@ export default function Loader() {
   return (
     <div className={styles.loaderContainer}>
       <p className={styles.loader}>
-        <span>Double M</span>
+        <span>Black & White</span>
       </p>
     </div>
   );

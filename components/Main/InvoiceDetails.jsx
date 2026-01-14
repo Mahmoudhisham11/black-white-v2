@@ -81,9 +81,8 @@ export default function InvoiceDetails({
               <th>الكود</th>
               <th>المنتج</th>
               <th>السعر</th>
-              {canViewProfit && <th>سعر الجملة</th>}
               <th>الكمية</th>
-              {canReturn && <th>إجراء</th>}
+              <th>إجراء</th>
             </tr>
           </thead>
           <tbody>
@@ -102,7 +101,6 @@ export default function InvoiceDetails({
                     {item.size ? ` - ${item.size}` : ""}
                   </td>
                   <td>{item.sellPrice}</td>
-                  {canViewProfit && <td>{item.buyPrice}</td>}
                   <td>{item.quantity}</td>
                   <td>
                     <button
