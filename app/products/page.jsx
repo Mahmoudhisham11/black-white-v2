@@ -856,7 +856,10 @@ function ProductsContent() {
           </div>
             
             <svg id="barcode" class="barcode"></svg>
-            <div class="price">${product.code ?? ""} </div>
+            <div class="container">
+              <div class="price">${product.code ?? ""} </div>
+              <div class="price">${product.sellPrice ?? ""} EGP </div>
+            </div>
           </div>
           <script>
             window.onload = function () {
